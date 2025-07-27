@@ -18,6 +18,9 @@ namespace Match3
         [SerializeField] Item itemPrefab;
         [SerializeField] ItemType[] itemTypes;
         [SerializeField] Ease ease = Ease.InQuad;
+        [SerializeField] GameObject explosion;
+
+        AudioManager audioManager;
 
         Grid<GridObject<Item>> grid;
 
@@ -27,6 +30,7 @@ namespace Match3
         void Awake()
         {
             inputReader = GetComponent<InputReader>();
+            audioManager = GetComponent<AudioManager>();
         }
 
         void Start()
@@ -67,13 +71,23 @@ namespace Match3
         private bool IsValidPosition(Vector2Int gridPos) => gridPos is { x: >= 0, y: >= 0 } && gridPos.x < width && gridPos.y < height;
         private bool isEmptyPosition(Vector2Int gridPos) => grid.GetValue(gridPos.x, gridPos.y) == null;
 
-        private void DeselectItem() => selectedItem = new Vector2Int(-1, -1);
-        private void SelectItem(Vector2Int gridPos) => selectedItem = gridPos;
+        private void DeselectItem()
+        {
+            audioManager.PlayDeselect();
+            selectedItem = new Vector2Int(-1, -1);
+        }
+
+        private void SelectItem(Vector2Int gridPos)
+        {
+            audioManager.PlayClick();
+            selectedItem = gridPos;
+        }
 
         private IEnumerator RunGameLoop(Vector2Int gridPosA, Vector2Int gridPosB)
         {
             yield return StartCoroutine(SwapGems(gridPosA, gridPosB));
 
+            // TODO: Calc Gamescore?
             // Matches?
             List<Vector2Int> matches = FindMatches();
             // Remove matches
@@ -83,6 +97,8 @@ namespace Match3
             // Refill board
             yield return StartCoroutine(FillBoard());
 
+            // TODO: Check Gameover
+
             DeselectItem();
 
             yield return null;
@@ -90,6 +106,7 @@ namespace Match3
 
         private IEnumerator ItemsFall()
         {
+            // TODO: Simplify
             for (var x = 0; x < width; x++)
             {
                 for (var y = 0; y < height; y++)
@@ -107,6 +124,7 @@ namespace Match3
                                     .DOLocalMove(grid.GetWorldPositionCenter(x, y), 0.1f)
                                     .SetEase(ease);
                                 // SFX play
+                                audioManager.PlayWoosh();
                                 yield return new WaitForSeconds(0.01f);
                                 break;
                             }
@@ -125,6 +143,7 @@ namespace Match3
                     if (grid.GetValue(x, y) == null)
                     {
                         //SFX play
+                        audioManager.PlayPop();
                         CreateItem(x, y);
                         yield return new WaitForSeconds(0.1f);
                     }
@@ -134,14 +153,15 @@ namespace Match3
 
         private IEnumerator ClearItems(List<Vector2Int> matches)
         {
-            // SFX play
 
             foreach (var match in matches)
             {
                 var item = grid.GetValue(match.x, match.y).GetValue();
                 grid.SetValue(match.x, match.y, null);
 
-                // removeVFX(match);
+                removeVFX(match);
+                // SFX play
+                audioManager.PlayMatch();
 
                 item.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.5f);
 
@@ -149,6 +169,14 @@ namespace Match3
 
                 item.DestroyItem();
             }
+        }
+
+        private void removeVFX(Vector2Int match)
+        {
+            // TODO: Pool
+            var fx = Instantiate(explosion, transform);
+            fx.transform.position = grid.GetWorldPositionCenter(match.x, match.y);
+            Destroy(fx, 5f);
         }
 
         private List<Vector2Int> FindMatches()
@@ -231,6 +259,11 @@ namespace Match3
                         matches.Add(new Vector2Int(x, height - 1 - k));
                     }
                 }
+            }
+
+            if (matches.Count == 0)
+            {
+                audioManager.PlayDud();
             }
 
             return new List<Vector2Int>(matches);
