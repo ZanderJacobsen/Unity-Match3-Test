@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Match3
@@ -15,5 +16,6 @@ namespace Match3
 
         public ItemType GetType() => type;
 
+        internal void DestroyItem() => Destroy(gameObject);
     }
 }

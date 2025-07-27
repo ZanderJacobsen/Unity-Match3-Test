@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Analytics;
 
@@ -43,6 +45,10 @@ namespace Match3
             var gridPos = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
 
             // validate grid position
+            if (!IsValidPosition(gridPos) || isEmptyPosition(gridPos))
+            {
+                return;
+            }
 
             if (selectedItem == gridPos)
             {
@@ -58,6 +64,9 @@ namespace Match3
             }
         }
 
+        private bool IsValidPosition(Vector2Int gridPos) => gridPos is { x: >= 0, y: >= 0 } && gridPos.x < width && gridPos.y < height;
+        private bool isEmptyPosition(Vector2Int gridPos) => grid.GetValue(gridPos.x, gridPos.y) == null;
+
         private void DeselectItem() => selectedItem = new Vector2Int(-1, -1);
         private void SelectItem(Vector2Int gridPos) => selectedItem = gridPos;
 
@@ -65,7 +74,166 @@ namespace Match3
         {
             yield return StartCoroutine(SwapGems(gridPosA, gridPosB));
 
+            // Matches?
+            List<Vector2Int> matches = FindMatches();
+            // Remove matches
+            yield return StartCoroutine(ClearItems(matches));
+            // Items fall
+            yield return StartCoroutine(ItemsFall());
+            // Refill board
+            yield return StartCoroutine(FillBoard());
+
+            DeselectItem();
+
             yield return null;
+        }
+
+        private IEnumerator ItemsFall()
+        {
+            for (var x = 0; x < width; x++)
+            {
+                for (var y = 0; y < height; y++)
+                {
+                    if (grid.GetValue(x, y) == null)
+                    {
+                        for (var i = y + 1; i < height; i++)
+                        {
+                            if (grid.GetValue(x, i) != null)
+                            {
+                                var item = grid.GetValue(x, i).GetValue();
+                                grid.SetValue(x, y, grid.GetValue(x, i));
+                                grid.SetValue(x, i, null);
+                                item.transform
+                                    .DOLocalMove(grid.GetWorldPositionCenter(x, y), 0.1f)
+                                    .SetEase(ease);
+                                // SFX play
+                                yield return new WaitForSeconds(0.01f);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private IEnumerator FillBoard()
+        {
+            for (var x = 0; x < width; x++)
+            {
+                for (var y = 0; y < height; y++)
+                {
+                    if (grid.GetValue(x, y) == null)
+                    {
+                        //SFX play
+                        CreateItem(x, y);
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+            }
+        }
+
+        private IEnumerator ClearItems(List<Vector2Int> matches)
+        {
+            // SFX play
+
+            foreach (var match in matches)
+            {
+                var item = grid.GetValue(match.x, match.y).GetValue();
+                grid.SetValue(match.x, match.y, null);
+
+                // removeVFX(match);
+
+                item.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.5f);
+
+                yield return new WaitForSeconds(0.1f);
+
+                item.DestroyItem();
+            }
+        }
+
+        private List<Vector2Int> FindMatches()
+        {
+            HashSet<Vector2Int> matches = new();
+
+            // Horizontal matches
+            for (int y = 0; y < height; y++)
+            {
+                int matchLength = 1;
+                for (int x = 1; x < width; x++)
+                {
+                    var previous = grid.GetValue(x - 1, y)?.GetValue();
+                    var current = grid.GetValue(x, y)?.GetValue();
+                    // var next = grid.GetValue(x + 1, y)?.GetValue();
+
+                    if (previous == null || current == null)
+                        continue;
+
+                    if (current.GetType() == previous.GetType())
+                    {
+                        matchLength++;
+                    }
+                    else
+                    {
+                        if (matchLength >= 3)
+                        {
+                            for (int k = 0; k < matchLength; k++)
+                            {
+                                matches.Add(new Vector2Int(x - 1 - k, y));
+                            }
+                        }
+                        matchLength = 1;
+                    }
+                }
+                // Check for match at end of row
+                if (matchLength >= 3)
+                {
+                    for (int k = 0; k < matchLength; k++)
+                    {
+                        matches.Add(new Vector2Int(width - 1 - k, y));
+                    }
+                }
+            }
+
+            //Vertical matches
+            for (int x = 0; x < width; x++)
+            {
+                int matchLength = 1;
+                for (int y = 1; y < height; y++)
+                {
+                    var previous = grid.GetValue(x, y - 1)?.GetValue();
+                    var current = grid.GetValue(x, y)?.GetValue();
+                    // var next = grid.GetValue(x + 1, y)?.GetValue();
+
+                    if (previous == null || current == null)
+                        continue;
+
+                    if (current.GetType() == previous.GetType())
+                    {
+                        matchLength++;
+                    }
+                    else
+                    {
+                        if (matchLength >= 3)
+                        {
+                            for (int k = 0; k < matchLength; k++)
+                            {
+                                matches.Add(new Vector2Int(x, y - 1 - k));
+                            }
+                        }
+                        matchLength = 1;
+                    }
+                }
+                // Check for match at end of row
+                if (matchLength >= 3)
+                {
+                    for (int k = 0; k < matchLength; k++)
+                    {
+                        matches.Add(new Vector2Int(x, height - 1 - k));
+                    }
+                }
+            }
+
+            return new List<Vector2Int>(matches);
         }
 
         private IEnumerator SwapGems(Vector2Int gridPosA, Vector2Int gridPosB)
@@ -102,7 +270,7 @@ namespace Match3
 
         void CreateItem(int x, int y)
         {
-            Item item = Instantiate(itemPrefab, grid.GetWorldPositionCenter(x, y), Quaternion.identity, transform);
+            var item = Instantiate(itemPrefab, grid.GetWorldPositionCenter(x, y), Quaternion.identity, transform);
             item.SetType(itemTypes[Random.Range(0, itemTypes.Length)]);
             grid.SetValue(x, y, new GridObject<Item>(grid, x, y));
             var gridObject = new GridObject<Item>(grid, x, y);
