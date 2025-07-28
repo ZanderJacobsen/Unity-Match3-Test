@@ -97,11 +97,25 @@ namespace Match3
             // Refill board
             yield return StartCoroutine(FillBoard());
 
-            // TODO: Check Gameover
-
             DeselectItem();
 
-            yield return null;
+            // TODO: Check Gameover
+            // TODO: Check for new matches
+            yield return StartCoroutine(CascadeMatches());
+        }
+
+        private IEnumerator CascadeMatches()
+        {
+            List<Vector2Int> matches = FindMatches();
+            if (matches.Count > 0)
+            {
+                yield return StartCoroutine(ClearItems(matches));
+                // Items fall
+                yield return StartCoroutine(ItemsFall());
+                // Refill board
+                yield return StartCoroutine(FillBoard());
+                yield return StartCoroutine(CascadeMatches());
+            }
         }
 
         private IEnumerator ItemsFall()
