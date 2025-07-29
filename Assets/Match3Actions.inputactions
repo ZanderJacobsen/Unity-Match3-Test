@@ -24,22 +24,31 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Fire",
-                    "type": "Button",
-                    "id": "038e5ef4-e480-44b6-9599-941e8f8be6b3",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Select",
+                    "name": "Position",
                     "type": "Value",
                     "id": "77fca0e9-4cdf-464e-891a-009dca8016e7",
                     "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Down",
+                    "type": "Button",
+                    "id": "0ec6d931-5397-47ee-a43c-aea4d3458f70",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Down1",
+                    "type": "Button",
+                    "id": "c84e3994-3cc2-4a7b-81ce-a675e7364adc",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -210,23 +219,56 @@
                 },
                 {
                     "name": "",
-                    "id": "45f1cf80-2e55-4391-9fb8-f36e7a004a4e",
-                    "path": "<Mouse>/leftButton",
+                    "id": "3caa35ff-ebe4-478a-8a63-aa6dbf7b8847",
+                    "path": "<Pointer>/position",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Fire",
+                    "action": "Position",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "976d53bb-de5a-4b8f-a3d3-adb6f3479cbd",
-                    "path": "<Pointer>/position",
+                    "id": "46dd28f1-09b3-4d5a-b48e-3eab16d136b1",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Select",
+                    "action": "Down",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4b9e8b53-e251-40cd-aa0c-32368d206a6e",
+                    "path": "<Touchscreen>/touch*/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Down",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d774957d-7cf0-47fe-9b06-61b70f6bce00",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Down1",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3e696769-b72e-4549-a0c5-b4c13ae568d4",
+                    "path": "<Touchscreen>/touch*/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Down1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

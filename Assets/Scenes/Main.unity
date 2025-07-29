@@ -182,7 +182,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 242ceff968139e949a5e398a5bc760bb, type: 2}
   - {fileID: 11400000, guid: fbcced3838e85744784ebf49d58755aa, type: 2}
   ease: 5
-  explosion: {fileID: 725748389856807714, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
+  explosion: {fileID: 4021103657954561961, guid: 5c755f9bc5253ea418e919994537dcc7, type: 3}
 --- !u!114 &83559547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,6 +573,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Item
       objectReference: {fileID: 0}
+    - target: {fileID: 2812649679874012154, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: glow
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2812649679874012154, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: outline
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2812649679874012154, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: outlinePrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3396288687922345510, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.58706
@@ -612,6 +624,26 @@ PrefabInstance:
     - target: {fileID: 3396288687922345510, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6769794660172875974, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7329751905728821148, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7717297428705079508, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7717297428705079508, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7717297428705079508, guid: e425c882b7ca07841badc23a9c6cf9be, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

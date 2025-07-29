@@ -25,7 +25,10 @@ namespace Match3
         Grid<GridObject<Item>> grid;
 
         InputReader inputReader;
+        bool disableInput = false;
+
         Vector2Int selectedItem = Vector2Int.one * -1;
+        Vector2Int neighborItem = Vector2Int.one * -1;
 
         void Awake()
         {
@@ -36,16 +39,21 @@ namespace Match3
         void Start()
         {
             InitializeGrid();
-            inputReader.Fire += OnSelectItem;
+            inputReader.onDown += OnSelectItem;
+            inputReader.onUp += OnReleaseItem;
         }
 
         void OnDestroy()
         {
-            inputReader.Fire -= OnSelectItem;
+            inputReader.onDown -= OnSelectItem;
+            inputReader.onUp -= OnReleaseItem;
         }
 
         private void OnSelectItem()
         {
+            if (disableInput)
+                return;
+
             var gridPos = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
             var item = grid.GetValue(gridPos.x, gridPos.y)?.GetValue();
 
@@ -55,26 +63,44 @@ namespace Match3
                 return;
             }
 
-            if (selectedItem == gridPos)
-            {
-                item.SetSelected(false);
-                DeselectItem();
-            }
-            else if (selectedItem == Vector2Int.one * -1)
+            if (selectedItem == Vector2Int.one * -1)
             {
                 item.SetSelected(true);
                 SelectItem(gridPos);
             }
-            else if (AreNeighbors(selectedItem, gridPos))
-            {
-                StartCoroutine(RunGameLoop(selectedItem, gridPos));
-            }
-            else
+        }
+
+        private void OnReleaseItem()
+        {
+            if (disableInput)
+                return;
+
+            neighborItem = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
+            var item = grid.GetValue(selectedItem.x, selectedItem.y)?.GetValue();
+
+
+            // validate grid position
+            if (IsValidPosition(selectedItem))
             {
                 item.SetSelected(false);
-                audioManager.PlayDud(); // bad move sound
-                DeselectItem(); // Reset selection
             }
+            else if (!IsValidPosition(neighborItem) || isEmptyPosition(neighborItem))
+            {
+                return;
+            }
+
+            if (selectedItem == neighborItem)
+            {
+
+            }
+            else if (!AreNeighbors(selectedItem, neighborItem))
+            {
+                audioManager.PlayDud(); // bad move sound
+            }
+            else
+                StartCoroutine(RunGameLoop(selectedItem, neighborItem));
+
+            DeselectItem(); // Reset selection
         }
 
         private bool AreNeighbors(Vector2Int a, Vector2Int b)
@@ -102,11 +128,22 @@ namespace Match3
 
         private IEnumerator RunGameLoop(Vector2Int gridPosA, Vector2Int gridPosB)
         {
+            disableInput = true;
             yield return StartCoroutine(SwapGems(gridPosA, gridPosB));
 
             // TODO: Calc Gamescore?
-            // Matches?
+
             List<Vector2Int> matches = FindMatches();
+
+            if (matches.Count == 0)
+            {
+                // Swap back if no matches
+                yield return StartCoroutine(SwapGems(gridPosB, gridPosA));
+                audioManager.PlayDud();
+                disableInput = false;
+                yield break;
+            }
+
             // Remove matches
             yield return StartCoroutine(ClearItems(matches));
             // Items fall
@@ -114,13 +151,12 @@ namespace Match3
             // Refill board
             yield return StartCoroutine(FillBoard());
 
-            var item = grid.GetValue(gridPosA.x, gridPosA.y)?.GetValue();
-            item.SetSelected(false);
-            DeselectItem();
-
             // TODO: Check Gameover
-            // TODO: Check for new matches
+
             yield return StartCoroutine(CascadeMatches());
+
+            disableInput = false;
+            yield return null;
         }
 
         private IEnumerator CascadeMatches()
@@ -292,11 +328,6 @@ namespace Match3
                         matches.Add(new Vector2Int(x, height - 1 - k));
                     }
                 }
-            }
-
-            if (matches.Count == 0)
-            {
-                audioManager.PlayDud();
             }
 
             return new List<Vector2Int>(matches);

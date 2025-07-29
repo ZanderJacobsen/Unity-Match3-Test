@@ -7,7 +7,8 @@ namespace Match3
     public class Item : MonoBehaviour
     {
         public ItemType type;
-        [SerializeField] GameObject outline;
+        [SerializeField] GameObject glow;
+
 
         public void SetType(ItemType type)
         {
@@ -19,7 +20,7 @@ namespace Match3
 
         public void SetSelected(bool selected)
         {
-            outline.SetActive(selected);
+            glow.SetActive(selected);
         }
 
         internal void DestroyItem() => Destroy(gameObject);

@@ -8,26 +8,29 @@ namespace Match3
     public class InputReader : MonoBehaviour
     {
         PlayerInput playerInput;
-        InputAction selectAction;
-        InputAction fireAction;
+        InputAction positionAction;
+        InputAction downAction;
 
-        public event Action Fire;
+        public event Action onDown;
+        public event Action onUp;
 
-        public Vector2 Selected => selectAction.ReadValue<Vector2>();
-        void OnFire(InputAction.CallbackContext obj) => Fire?.Invoke();
+        public Vector2 Selected => positionAction.ReadValue<Vector2>();
+        void OnSelect(InputAction.CallbackContext obj) => onDown?.Invoke();
+        void OnRelease(InputAction.CallbackContext obj) => onUp?.Invoke();
 
         void Start()
         {
             playerInput = GetComponent<PlayerInput>();
-            selectAction = playerInput.actions["Select"];
-            fireAction = playerInput.actions["Fire"];
+            positionAction = playerInput.actions["Position"];
+            downAction = playerInput.actions["Down"];
 
-            fireAction.performed += OnFire;
+            downAction.started += OnSelect;
+            downAction.canceled += OnRelease;
         }
 
         void OnDestroy()
         {
-            fireAction.performed -= OnFire;
+            downAction.performed -= OnSelect;
         }
     }
 }
