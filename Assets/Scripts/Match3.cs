@@ -30,6 +30,9 @@ namespace Match3
         Vector2Int selectedItem = Vector2Int.one * -1;
         Vector2Int neighborItem = Vector2Int.one * -1;
 
+        Item heldItem = null;
+        bool isDragging = false;
+
         void Awake()
         {
             inputReader = GetComponent<InputReader>();
@@ -51,11 +54,9 @@ namespace Match3
 
         private void OnSelectItem()
         {
-            if (disableInput)
-                return;
+            if (disableInput) return;
 
             var gridPos = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
-            var item = grid.GetValue(gridPos.x, gridPos.y)?.GetValue();
 
             // validate grid position
             if (!IsValidPosition(gridPos) || isEmptyPosition(gridPos))
@@ -63,35 +64,44 @@ namespace Match3
                 return;
             }
 
+            heldItem = grid.GetValue(gridPos.x, gridPos.y)?.GetValue();
+
+            if (heldItem == null)
+            {
+                return;
+            }
+
+            isDragging = true;
+
             if (selectedItem == Vector2Int.one * -1)
             {
-                item.SetSelected(true);
+                heldItem.SetSelected(true);
                 SelectItem(gridPos);
             }
         }
 
         private void OnReleaseItem()
         {
-            if (disableInput)
-                return;
+            if (disableInput) return;
+            if (!isDragging) return;
+
+            isDragging = false;
 
             neighborItem = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
-            var item = grid.GetValue(selectedItem.x, selectedItem.y)?.GetValue();
+            // var item = grid.GetValue(selectedItem.x, selectedItem.y)?.GetValue();
 
+            heldItem?.SetSelected(false);
 
             // validate grid position
-            if (IsValidPosition(selectedItem))
+            if (!IsValidPosition(selectedItem) || !IsValidPosition(neighborItem) || isEmptyPosition(neighborItem))
             {
-                item.SetSelected(false);
-            }
-            else if (!IsValidPosition(neighborItem) || isEmptyPosition(neighborItem))
-            {
+                ResetDraggedItem();
                 return;
             }
 
             if (selectedItem == neighborItem)
             {
-
+                ResetDraggedItem();
             }
             else if (!AreNeighbors(selectedItem, neighborItem))
             {
@@ -103,6 +113,51 @@ namespace Match3
             DeselectItem(); // Reset selection
         }
 
+        void Update()
+        {
+            if (!isDragging || heldItem == null) return;
+            Vector2 currentGridPos = grid.GetXYF(Camera.main.ScreenToWorldPoint(inputReader.Selected));
+            Debug.Log("Current Grid Position: " + currentGridPos);
+
+            if (!IsValidPosition(currentGridPos))
+            {
+                heldItem.transform.position = grid.GetWorldPositionCenter(selectedItem.x, selectedItem.y);
+                return;
+            }
+
+            Vector2 delta = currentGridPos - selectedItem;
+
+            // Clamp to max distance of 1 in cardinal direction
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                delta = new Vector2(Mathf.Clamp(delta.x, -1, 1), 0);
+            }
+            else
+            {
+                delta = new Vector2(0, Mathf.Clamp(delta.y, -1, 1));
+            }
+
+            Vector2 clampedGridPos = selectedItem + delta;
+
+            if (!IsValidPosition(clampedGridPos)) return;
+
+            Vector3 targetWorldPos = grid.GetWorldPositionCenter(clampedGridPos.x, clampedGridPos.y);
+            heldItem.transform.position = targetWorldPos;
+        }
+
+        void ResetDraggedItem()
+        {
+            if (heldItem != null && IsValidPosition(selectedItem))
+            {
+                heldItem.transform.position = grid.GetWorldPositionCenter(selectedItem.x, selectedItem.y);
+                audioManager.PlayDud(); // optional feedback
+            }
+
+            heldItem = null;
+            isDragging = false;
+        }
+
+
         private bool AreNeighbors(Vector2Int a, Vector2Int b)
         {
             int dx = Mathf.Abs(a.x - b.x);
@@ -112,6 +167,7 @@ namespace Match3
 
 
         private bool IsValidPosition(Vector2Int gridPos) => gridPos is { x: >= 0, y: >= 0 } && gridPos.x < width && gridPos.y < height;
+        private bool IsValidPosition(Vector2 gridPos) => gridPos is { x: >= 0, y: >= 0 } && gridPos.x < width && gridPos.y < height;
         private bool isEmptyPosition(Vector2Int gridPos) => grid.GetValue(gridPos.x, gridPos.y) == null;
 
         private void DeselectItem()

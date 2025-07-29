@@ -70,8 +70,11 @@ namespace Match3
         public bool IsValid(int x, int y) => x >= 0 && y >= 0 && x < width && y < height;
 
         public Vector2Int GetXY(Vector3 worldPosition) => coordinateConverter.WorldToGrid(worldPosition, cellSize, origin);
+        public Vector2 GetXYF(Vector3 worldPosition) => coordinateConverter.WorldToGridF(worldPosition, cellSize, origin);
         public Vector3 GetWorldPositionCenter(int x, int y) => coordinateConverter.GridToWorldCenter(x, y, cellSize, origin);
+        public Vector3 GetWorldPositionCenter(float x, float y) => coordinateConverter.GridToWorldCenter(x, y, cellSize, origin);
         public Vector3 GetWorldPosition(int x, int y) => coordinateConverter.GridToWorld(x, y, cellSize, origin);
+        public Vector3 GetWorldPosition(float x, float y) => coordinateConverter.GridToWorld(x, y, cellSize, origin);
 
         void DrawdebugLines()
         {
@@ -113,11 +116,11 @@ namespace Match3
         public abstract class CoordinateConverter
         {
             public abstract Vector3 GridToWorld(int x, int y, float cellSize, Vector3 origin);
-
+            public abstract Vector3 GridToWorld(float x, float y, float cellSize, Vector3 origin);
             public abstract Vector3 GridToWorldCenter(int x, int y, float cellSize, Vector3 origin);
-
+            public abstract Vector3 GridToWorldCenter(float x, float y, float cellSize, Vector3 origin);
             public abstract Vector2Int WorldToGrid(Vector3 worldPosition, float cellSize, Vector3 origin);
-
+            public abstract Vector2 WorldToGridF(Vector3 worldPosition, float cellSize, Vector3 origin);
             public abstract Vector3 Forward { get; }
         }
 
@@ -132,7 +135,17 @@ namespace Match3
                 return new Vector3(x, y, 0) * cellSize + origin;
             }
 
+            public override Vector3 GridToWorld(float x, float y, float cellSize, Vector3 origin)
+            {
+                return new Vector3(x, y, 0) * cellSize + origin;
+            }
+
             public override Vector3 GridToWorldCenter(int x, int y, float cellSize, Vector3 origin)
+            {
+                return new Vector3(x * cellSize + cellSize * 0.5f, y * cellSize + cellSize * 0.5f, 0) + origin;
+            }
+
+            public override Vector3 GridToWorldCenter(float x, float y, float cellSize, Vector3 origin)
             {
                 return new Vector3(x * cellSize + cellSize * 0.5f, y * cellSize + cellSize * 0.5f, 0) + origin;
             }
@@ -140,15 +153,20 @@ namespace Match3
             public override Vector2Int WorldToGrid(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
                 Vector3 gridPosition = (worldPosition - origin) / cellSize;
-                var x = Mathf.FloorToInt(gridPosition.x);
-                var y = Mathf.FloorToInt(gridPosition.y);
+                var x = Mathf.RoundToInt(gridPosition.x);
+                var y = Mathf.RoundToInt(gridPosition.y);
                 return new Vector2Int(x, y);
+            }
+
+            public override Vector2 WorldToGridF(Vector3 worldPosition, float cellSize, Vector3 origin)
+            {
+                return (worldPosition - origin) / cellSize;
             }
 
             public override Vector3 Forward => Vector3.forward;
         }
 
-                //// <summary>
+        //// <summary>
         /// A coordinate converter for horizontal grids, where the grid lies on the X-Z plane
         ///  </summary>
         public class HorizontalConverter : CoordinateConverter
@@ -159,7 +177,17 @@ namespace Match3
                 return new Vector3(x, 0, y) * cellSize + origin;
             }
 
+            public override Vector3 GridToWorld(float x, float y, float cellSize, Vector3 origin)
+            {
+                return new Vector3(x, 0, y) * cellSize + origin;
+            }
+
             public override Vector3 GridToWorldCenter(int x, int y, float cellSize, Vector3 origin)
+            {
+                return new Vector3(x * cellSize + cellSize * 0.5f, 0, y * cellSize + cellSize * 0.5f) + origin;
+            }
+
+            public override Vector3 GridToWorldCenter(float x, float y, float cellSize, Vector3 origin)
             {
                 return new Vector3(x * cellSize + cellSize * 0.5f, 0, y * cellSize + cellSize * 0.5f) + origin;
             }
@@ -167,9 +195,14 @@ namespace Match3
             public override Vector2Int WorldToGrid(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
                 Vector3 gridPosition = (worldPosition - origin) / cellSize;
-                var x = Mathf.FloorToInt(gridPosition.x);
-                var y = Mathf.FloorToInt(gridPosition.z);
+                var x = Mathf.RoundToInt(gridPosition.x);
+                var y = Mathf.RoundToInt(gridPosition.z);
                 return new Vector2Int(x, y);
+            }
+
+            public override Vector2 WorldToGridF(Vector3 worldPosition, float cellSize, Vector3 origin)
+            {
+                return (worldPosition - origin) / cellSize;
             }
 
             public override Vector3 Forward => Vector3.up;
