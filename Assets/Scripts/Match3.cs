@@ -47,6 +47,7 @@ namespace Match3
         private void OnSelectItem()
         {
             var gridPos = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
+            var item = grid.GetValue(gridPos.x, gridPos.y)?.GetValue();
 
             // validate grid position
             if (!IsValidPosition(gridPos) || isEmptyPosition(gridPos))
@@ -56,17 +57,33 @@ namespace Match3
 
             if (selectedItem == gridPos)
             {
+                item.SetSelected(false);
                 DeselectItem();
             }
             else if (selectedItem == Vector2Int.one * -1)
             {
+                item.SetSelected(true);
                 SelectItem(gridPos);
             }
-            else
+            else if (AreNeighbors(selectedItem, gridPos))
             {
                 StartCoroutine(RunGameLoop(selectedItem, gridPos));
             }
+            else
+            {
+                item.SetSelected(false);
+                audioManager.PlayDud(); // bad move sound
+                DeselectItem(); // Reset selection
+            }
         }
+
+        private bool AreNeighbors(Vector2Int a, Vector2Int b)
+        {
+            int dx = Mathf.Abs(a.x - b.x);
+            int dy = Mathf.Abs(a.y - b.y);
+            return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
+        }
+
 
         private bool IsValidPosition(Vector2Int gridPos) => gridPos is { x: >= 0, y: >= 0 } && gridPos.x < width && gridPos.y < height;
         private bool isEmptyPosition(Vector2Int gridPos) => grid.GetValue(gridPos.x, gridPos.y) == null;
@@ -97,6 +114,8 @@ namespace Match3
             // Refill board
             yield return StartCoroutine(FillBoard());
 
+            var item = grid.GetValue(gridPosA.x, gridPosA.y)?.GetValue();
+            item.SetSelected(false);
             DeselectItem();
 
             // TODO: Check Gameover
