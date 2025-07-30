@@ -153,14 +153,15 @@ namespace Match3
             public override Vector2Int WorldToGrid(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
                 Vector3 gridPosition = (worldPosition - origin) / cellSize;
-                var x = Mathf.RoundToInt(gridPosition.x);
-                var y = Mathf.RoundToInt(gridPosition.y);
+                var x = Mathf.FloorToInt(gridPosition.x);
+                var y = Mathf.FloorToInt(gridPosition.y);
                 return new Vector2Int(x, y);
             }
 
             public override Vector2 WorldToGridF(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
-                return (worldPosition - origin) / cellSize;
+                var temp = (worldPosition - origin) / cellSize;
+                return new Vector2(temp.x, temp.y);
             }
 
             public override Vector3 Forward => Vector3.forward;
@@ -195,14 +196,16 @@ namespace Match3
             public override Vector2Int WorldToGrid(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
                 Vector3 gridPosition = (worldPosition - origin) / cellSize;
-                var x = Mathf.RoundToInt(gridPosition.x);
-                var y = Mathf.RoundToInt(gridPosition.z);
+                var x = Mathf.FloorToInt(gridPosition.x);
+                var y = Mathf.FloorToInt(gridPosition.z);
                 return new Vector2Int(x, y);
             }
 
             public override Vector2 WorldToGridF(Vector3 worldPosition, float cellSize, Vector3 origin)
             {
-                return (worldPosition - origin) / cellSize;
+               
+                var temp = (worldPosition - origin) / cellSize;
+                return new Vector2(temp.x, temp.z);
             }
 
             public override Vector3 Forward => Vector3.up;

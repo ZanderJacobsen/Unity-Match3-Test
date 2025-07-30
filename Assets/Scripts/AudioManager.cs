@@ -18,7 +18,7 @@ namespace Match3
 
         AudioSource audioSource;
 
-        void OnValidate()
+        void Awake()
         {
             if (audioSource == null) audioSource = GetComponent<AudioSource>();
         }

@@ -14,6 +14,7 @@ namespace Match3
         [SerializeField] float cellSize = 1f;
         [SerializeField] Vector3 originPosition = Vector3.zero;
         [SerializeField] bool debug = true;
+        private bool singleDebug = false; // For testing single debug lines
 
         [SerializeField] Item itemPrefab;
         [SerializeField] ItemType[] itemTypes;
@@ -44,6 +45,7 @@ namespace Match3
             InitializeGrid();
             inputReader.onDown += OnSelectItem;
             inputReader.onUp += OnReleaseItem;
+            singleDebug = debug;
         }
 
         void OnDestroy()
@@ -57,6 +59,7 @@ namespace Match3
             if (disableInput) return;
 
             var gridPos = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
+            Debug.Log("Selected Grid Position: " + gridPos);
 
             // validate grid position
             if (!IsValidPosition(gridPos) || isEmptyPosition(gridPos))
@@ -86,9 +89,24 @@ namespace Match3
             if (!isDragging) return;
 
             isDragging = false;
+            singleDebug = debug;
 
             neighborItem = grid.GetXY(Camera.main.ScreenToWorldPoint(inputReader.Selected));
             // var item = grid.GetValue(selectedItem.x, selectedItem.y)?.GetValue();
+
+            Vector2Int delta = neighborItem - selectedItem;
+
+            // Clamp to max distance of 1 in cardinal direction
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                delta = new Vector2Int(Mathf.Clamp(delta.x, -1, 1), 0);
+            }
+            else
+            {
+                delta = new Vector2Int(0, Mathf.Clamp(delta.y, -1, 1));
+            }
+
+            neighborItem = selectedItem + delta;
 
             heldItem?.SetSelected(false);
 
@@ -117,7 +135,8 @@ namespace Match3
         {
             if (!isDragging || heldItem == null) return;
             Vector2 currentGridPos = grid.GetXYF(Camera.main.ScreenToWorldPoint(inputReader.Selected));
-            Debug.Log("Current Grid Position: " + currentGridPos);
+            if (singleDebug)
+                Debug.Log("Current Grid Position: " + currentGridPos);
 
             if (!IsValidPosition(currentGridPos))
             {
@@ -143,6 +162,8 @@ namespace Match3
 
             Vector3 targetWorldPos = grid.GetWorldPositionCenter(clampedGridPos.x, clampedGridPos.y);
             heldItem.transform.position = targetWorldPos;
+
+            singleDebug = false;
         }
 
         void ResetDraggedItem()
